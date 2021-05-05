@@ -21,6 +21,8 @@ UKF::UKF() {
 
     // initial covariance matrix
     P_ = MatrixXd::Identity(5, 5);
+    P_(2, 2) = 1000;
+    P_(3, 3) = 1000;
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
     std_a_ = 1;//3; //1;//30;
@@ -105,6 +107,7 @@ void UKF::PredictMeanAndCovariance() {
     x = Xsig_pred_ * weights_;
     for (int i = 0; i < 2 * n_aug_ + 1; i ++) {
         diff.col(i) -= x;
+        helper::Normalize(diff.col(i)(3));
     }
     P += diff * weights_.asDiagonal() * diff.transpose();
     x_ = x;
@@ -133,12 +136,19 @@ void UKF::BuildAugmentedSigmaPoints(Eigen::MatrixXd* Xaug) {
         Xsig_aug.col(i).head(vector.size()) += vector;
         Xsig_aug.col(i + n_aug_).head(vector.size()) += -vector;
     }
+    //std::cout << "before Xaug = \n" << Xsig_aug << std::endl;
+    for (int i = 0; i < 2 * n_aug_ + 1; i ++) {
+        helper::Normalize(Xsig_aug.col(i)(3));
+    }
+    //std::cout << "buildAug Xaug = \n" << Xsig_aug << std::endl;
     *Xaug = Xsig_aug;
 }
 
 void UKF::PredictSigmaPoints(const Eigen::MatrixXd & Xaug,
         const double delta_t) {
+    //std::cout << "received Xaug = \n" << Xaug << std::endl;
     Eigen::MatrixXd Xsig_pred(n_x_, 2 * n_aug_ + 1);
+    Xsig_pred.fill(0);
     Xsig_pred = Xaug.topLeftCorner(n_x_, 2 * n_aug_ + 1);
     for (int i = 0; i < 2 * n_aug_ + 1; i ++) {
         const Eigen::VectorXd & x = Xaug.col(i);
@@ -146,6 +156,7 @@ void UKF::PredictSigmaPoints(const Eigen::MatrixXd & Xaug,
         helper::BuildNoiseVector(x, delta_t, noise);
         helper::BuildStateVector(x, delta_t, state);
         Xsig_pred.col(i) += state + noise;
+        helper::Normalize(Xsig_pred.col(i)(3));
     }
     Xsig_pred_ = Xsig_pred;
 }

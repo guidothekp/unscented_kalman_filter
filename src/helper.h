@@ -46,10 +46,13 @@ namespace helper {
             const bool isRadar,
             Eigen::VectorXd & x,
             Eigen::MatrixXd & P) {
+        //std::cout << "x: \n" << x << std::endl;
+        //std::cout << "Xsig_pred: \n" << Xsig_pred << std::endl;
         Eigen::MatrixXd xdiff = Xsig_pred;
         Eigen::MatrixXd zdiff = Zsig;
         for (int i = 0; i < Xsig_pred.cols(); i ++) {
             xdiff.col(i) -= x;
+            //std::cout << "xdiff.col(" << i << ") = \n" << xdiff.col(i) << std::endl;
             Normalize(xdiff.col(i)(3));
         }
         for (int i = 0; i < Zsig.cols(); i ++) {
@@ -109,9 +112,13 @@ namespace helper {
         if (value >= -M_PI && value <= M_PI) {
             return;
         }
-        int sign = value > M_PI ? -1 : +1;
-        value += sign * 2 * M_PI;
-        Normalize(value);
+        //std::cout << "value = " << value << std::endl;
+        while (value > M_PI || value < -M_PI) {
+            int sign = value > M_PI ? -1 : +1;
+            value += sign * 2 * M_PI;
+        }
+        //std::cout << "post value = " << value << std::endl;
+        //Normalize(value);
     }
 
 };
