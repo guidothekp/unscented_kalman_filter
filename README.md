@@ -1,12 +1,11 @@
 # What did I do?
 
-Since the state update is independent of the measurement methods, the state
-update mechanism is common to multiple ways of measurements.
-
-As for measuring process, I used Unscented Kalman for both. What this means is
+I used Unscented Kalman for both the sensors. What this means is
 that I used the augmented and sigma points to sample the distribution for both
 Lidar and Radar. This facilitates code reuse and all one has to do is to [a]
 predict the measurements in a sensor dependent way and [b] figure out how one measures the innovation. Beyond this point, the matrix manipulations are handled completely by the UKF.
+
+This code is scalable for other sensors.
 
 # SFND_Unscented_Kalman_Filter
 Sensor Fusion UKF Highway Project Starter Code
