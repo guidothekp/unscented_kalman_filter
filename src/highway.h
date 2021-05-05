@@ -143,11 +143,6 @@ public:
     			double v2 = sin(yaw)*v;
 				estimate << traffic[i].ukf.x_[0], traffic[i].ukf.x_[1], v1, v2;
 				tools.estimations.push_back(estimate);
-                std::cout << "timestamp = " << timestamp << std::endl;
-                std::cout << "yaw = " << yaw << std::endl;
-                std::cout <<  "v = " << v << std::endl;
-                std::cout << "estimate for " << traffic[i].ukf.name_ << "= \n" << estimate << std::endl;	
-                std::cout << "ground_truth " << traffic[i].ukf.name_ << "= \n" << gt << std::endl;	
 			}
 		}
 		viewer->addText("Accuracy - RMSE:", 30, 300, 20, 1, 1, 1, "rmse");
@@ -182,8 +177,6 @@ public:
 		}
 		if(!pass)
 		{
-            std::cout << "RMSE FAILED" << std::endl;
-            std::cout << "timestamp: " << timestamp << std::endl;
 			viewer->addText("RMSE Failed Threshold", 30, 150, 20, 1, 0, 0, "rmse_fail");
 			if(rmseFailLog[0] > 0)
 				viewer->addText(" X: "+std::to_string(rmseFailLog[0]), 30, 125, 20, 1, 0, 0, "rmse_fail_x");

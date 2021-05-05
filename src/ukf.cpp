@@ -26,7 +26,7 @@ UKF::UKF() {
     std_a_ = 1;//3; //1;//30;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.5; //0.6;//0.2;//2*M_PI/400;//30;
+    std_yawdd_ = M_PI/8; //0.5; //0.6;//0.2;//2*M_PI/400;//30;
 
 
     /**
@@ -88,23 +88,11 @@ void UKF::Prediction(const double delta_t) {
     UpdatePredictedState(delta_t);
 }
 
-/**
- * pre-condition: the augmented matrix is already built.
- * post-condition: the state and covariance are updated to the time 
- * listed in time_us_
- */
 void UKF::UpdatePredictedState(const double delta_t) {
-    std::cout << "UpdatePredictedState(" << delta_t << ")" << std::endl;
-    std::cout << "x_ = " << std::endl << x_ << std::endl;
-    std::cout << "P_ = " << std::endl << P_ << std::endl;
     Eigen::MatrixXd Xaug(n_aug_, 2 * n_aug_ + 1); 
-    helper::init(Xaug);
     Xaug.fill(0);
-    //std::cout << "building augmented state\n";
     BuildAugmentedSigmaPoints(&Xaug);
-    //std::cout << "predicting sigma points\n";
     PredictSigmaPoints(Xaug, delta_t);
-    //std::cout << "predicting mean and covariance\n";
     PredictMeanAndCovariance();
 }
 
@@ -113,34 +101,16 @@ void UKF::PredictMeanAndCovariance() {
     Eigen::MatrixXd P(n_x_, n_x_);
     x.fill(0);
     P.fill(0);
-    //std::cout << "weights = \n" << weights_ << std::endl;
     Eigen::MatrixXd diff = Xsig_pred_;
-    //std::cout << "Xsig_pred_ = \n" << Xsig_pred_ << std::endl;
     x = Xsig_pred_ * weights_;
     for (int i = 0; i < 2 * n_aug_ + 1; i ++) {
-        /*
-           while (x(3) > M_PI) {
-           x(3) -= 2 * M_PI;
-           }
-           while (x(3) < -M_PI) {
-           x(3) += 2 * M_PI;
-           }
-           */
-        //x(3) = helper::ToWithIn2PI(x(3));
-        //helper::Normalize(x(3));
         diff.col(i) -= x;
-        //diff.col(i)(3) = helper::ToWithIn2PI(diff.col(i)(3));
-        //helper::Normalize(diff.col(i)(3));
     }
     P += diff * weights_.asDiagonal() * diff.transpose();
     x_ = x;
     P_ = P;
-    std::cout << "Predicted Mean And Covariance: " << std::endl;
-    std::cout << "x_ = " << std::endl << x_ << std::endl;
-    std::cout << "P_ = " << std::endl << P_ << std::endl;
 }
 
-//build augmented sigma points
 void UKF::BuildAugmentedSigmaPoints(Eigen::MatrixXd* Xaug) {
     Eigen::VectorXd x_aug(n_aug_);
     Eigen::MatrixXd P_aug(n_aug_, n_aug_);
@@ -163,10 +133,6 @@ void UKF::BuildAugmentedSigmaPoints(Eigen::MatrixXd* Xaug) {
         Xsig_aug.col(i).head(vector.size()) += vector;
         Xsig_aug.col(i + n_aug_).head(vector.size()) += -vector;
     }
-    for (int i = 0; i < 2 * n_aug_ + 1; i ++) {
-        //Xsig_aug.col(i)(3) = helper::ToWithIn2PI(Xsig_aug.col(i)(3));
-        //helper::Normalize(Xsig_aug.col(i)(3));
-    }
     *Xaug = Xsig_aug;
 }
 
@@ -180,17 +146,12 @@ void UKF::PredictSigmaPoints(const Eigen::MatrixXd & Xaug,
         helper::BuildNoiseVector(x, delta_t, noise);
         helper::BuildStateVector(x, delta_t, state);
         Xsig_pred.col(i) += state + noise;
-        //Xsig_pred.col(i)(3) = helper::ToWithIn2PI(Xsig_pred.col(i)(3));
-        //helper::Normalize(Xsig_pred.col(i)(3));
     }
     Xsig_pred_ = Xsig_pred;
 }
 
 void UKF::UpdateStateToMeasurementTime(
         const MeasurementPackage & meas_package) {
-    std::cout << "UpdateStateToMeasurementTime called\n";
-    std::cout << "meas_package.time_stamp = " << meas_package.timestamp_ << std::endl;
-    std::cout << "previous_measurement_time = " << time_us_ << std::endl;
     //bring the state up to speed.
     double delta_in_ms = 1e-6 * 
         (meas_package.timestamp_ - time_us_);
@@ -206,12 +167,9 @@ void UKF::UpdateLidar(const MeasurementPackage & meas_package) {
      * You can also calculate the lidar NIS, if desired.
      */
     const Eigen::VectorXd & z= meas_package.raw_measurements_;
-    std::cout << "lidar called with z = \n" << z << std::endl;
     if (!is_initialized_) {
-        std::cout << "initializing lidar...\n";
         x_.fill(0.0);
         x_.head(z.size()) = z;
-        std::cout << "x_ is now \n" << x_ << std::endl;
         is_initialized_ = true;
         return;
     } 
@@ -234,15 +192,11 @@ void UKF::UpdateRadar(const MeasurementPackage & meas_package) {
      * covariance, P_.
      * You can also calculate the radar NIS, if desired.
      */
-    //std::cout << "update RADAR has been called. \n";
     const Eigen::VectorXd & z = meas_package.raw_measurements_;
-    std::cout << "radar received z = \n" << z << std::endl;
     if (!is_initialized_) {
-        std::cout << "initializing radar...\n";
         double rho = z[0], phi = z[1];
         x_ << rho*cos(phi), rho*sin(phi), 0, 0, 0;
         is_initialized_ = true;
-        //Prediction(0);
         return;
     }
     if (!use_radar_) {
@@ -271,16 +225,12 @@ void UKF::PredictLidarMeasurement(Eigen::VectorXd & z_pred,
 void UKF::PredictRadarMeasurement(Eigen::VectorXd & z_pred,
         Eigen::MatrixXd & S,
         Eigen::MatrixXd & Zsig) {
-    //std::cout << "x_ = \n" << x_ << std::endl;
-    //std::cout << "PRM: Xsig_pred_ = \n" << Xsig_pred_ << std::endl;
     for (int i = 0; i < 2 *n_aug_  + 1; i ++) {
         Eigen::VectorXd z = helper::convertToRadarMeasurementSpace(Xsig_pred_.col(i));
         Zsig.col(i) = z;
     }
-    //std::cout << "PRM: Zsig = \n" << Zsig << std::endl;
     helper::deduceNormalDistributionParams(Zsig, weights_, 
             radar_R, 1, z_pred, S);
-    //std::cout << "x_ = \n" << x_ << std::endl;
 }
 
 void UKF::UpdateStateWithData(const Eigen::VectorXd & z,
@@ -312,7 +262,6 @@ void UKF::initialize() {
     lidar_R(0, 0) = std_laspx_ * std_laspx_;
     lidar_R(1, 1) = std_laspy_ * std_laspy_;
     is_initialized_ = false;
-    //std::cout << "radar_R = \n " << radar_R << std::endl;
 }
 
 void UKF::initializeWeights() {
