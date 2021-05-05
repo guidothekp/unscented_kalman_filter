@@ -100,9 +100,7 @@ class UKF {
         std::string name_;
 
     private:
-        //initialize variables
         void initialize();
-        //set up weights needed.
         void initializeWeights();
         void PredictLidarMeasurement(Eigen::VectorXd & z_pred,
                 Eigen::MatrixXd & S,
@@ -130,10 +128,8 @@ class UKF {
                 const Eigen::MatrixXd & Zsig,
                 const bool isRadar);
 
-        //n_radar_z - KK for number of parameters in the radar
         int n_radar_z;
         int n_lidar_z;
-        //R -- KK
         Eigen::MatrixXd radar_R;
         Eigen::MatrixXd lidar_R;
 };
