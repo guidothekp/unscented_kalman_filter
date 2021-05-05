@@ -20,14 +20,14 @@ public:
 	// Parameters 
 	// --------------------------------
 	// Set which cars to track with UKF
-	std::vector<bool> trackCars = {true,true,true};
+	std::vector<bool> trackCars = {true, true, true}; 
 	// Visualize sensor measurements
 	bool visualize_lidar = true;
 	bool visualize_radar = true;
 	bool visualize_pcd = false;
 	// Predict path in the future using UKF
-	double projectedTime = 0;
-	int projectedSteps = 0;
+	double projectedTime = 2;
+	int projectedSteps = 6; //0;
 	// --------------------------------
 
 	Highway(pcl::visualization::PCLVisualizer::Ptr& viewer)
@@ -53,6 +53,7 @@ public:
 		if( trackCars[0] )
 		{
 			UKF ukf1;
+            ukf1.name_ = "Car 0";
 			car1.setUKF(ukf1);
 		}
 		traffic.push_back(car1);
@@ -67,6 +68,7 @@ public:
 		if( trackCars[1] )
 		{
 			UKF ukf2;
+            ukf2.name_ = "Car 1";
 			car2.setUKF(ukf2);
 		}
 		traffic.push_back(car2);
@@ -91,6 +93,7 @@ public:
 		if( trackCars[2] )
 		{
 			UKF ukf3;
+            ukf3.name_ = "Car 2";
 			car3.setUKF(ukf3);
 		}
 		traffic.push_back(car3);
@@ -140,7 +143,11 @@ public:
     			double v2 = sin(yaw)*v;
 				estimate << traffic[i].ukf.x_[0], traffic[i].ukf.x_[1], v1, v2;
 				tools.estimations.push_back(estimate);
-	
+                std::cout << "timestamp = " << timestamp << std::endl;
+                std::cout << "yaw = " << yaw << std::endl;
+                std::cout <<  "v = " << v << std::endl;
+                std::cout << "estimate for " << traffic[i].ukf.name_ << "= \n" << estimate << std::endl;	
+                std::cout << "ground_truth " << traffic[i].ukf.name_ << "= \n" << gt << std::endl;	
 			}
 		}
 		viewer->addText("Accuracy - RMSE:", 30, 300, 20, 1, 1, 1, "rmse");
@@ -149,7 +156,6 @@ public:
 		viewer->addText(" Y: "+std::to_string(rmse[1]), 30, 250, 20, 1, 1, 1, "rmse_y");
 		viewer->addText("Vx: "	+std::to_string(rmse[2]), 30, 225, 20, 1, 1, 1, "rmse_vx");
 		viewer->addText("Vy: "	+std::to_string(rmse[3]), 30, 200, 20, 1, 1, 1, "rmse_vy");
-
 		if(timestamp > 1.0e6)
 		{
 
@@ -176,6 +182,8 @@ public:
 		}
 		if(!pass)
 		{
+            std::cout << "RMSE FAILED" << std::endl;
+            std::cout << "timestamp: " << timestamp << std::endl;
 			viewer->addText("RMSE Failed Threshold", 30, 150, 20, 1, 0, 0, "rmse_fail");
 			if(rmseFailLog[0] > 0)
 				viewer->addText(" X: "+std::to_string(rmseFailLog[0]), 30, 125, 20, 1, 0, 0, "rmse_fail_x");
